@@ -1,0 +1,1650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CoffeeLedger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+:root {
+  --espresso: #2C1810;
+  --dark-roast: #3D2318;
+  --medium-roast: #6B3A2A;
+  --light-roast: #8B5E3C;
+  --crema: #D4A574;
+  --parchment: #F5EDE3;
+  --linen: #FAF6F1;
+  --white-foam: #FDFCFA;
+  --amber-accent: #C4853C;
+  --amber-glow: #E8A84C;
+  --warm-gray: #9B8B7A;
+  --soft-line: #E8DDD0;
+  --danger: #A0463C;
+  --danger-hover: #8B3A32;
+  --shadow-warm: rgba(44, 24, 16, 0.08);
+  --shadow-deep: rgba(44, 24, 16, 0.15);
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-body: 'DM Sans', -apple-system, sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--linen);
+  color: var(--espresso);
+  min-height: 100vh;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Subtle paper texture overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─── AUTH SCREEN ─── */
+.auth-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--linen);
+  transition: opacity 0.4s, visibility 0.4s;
+}
+
+.auth-screen.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.auth-card {
+  text-align: center;
+  padding: 3rem 2.5rem;
+  max-width: 380px;
+  width: 90%;
+}
+
+.auth-card .logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.auth-card h1 {
+  font-family: var(--font-display);
+  font-size: 2.6rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--espresso);
+}
+
+.auth-card .tagline {
+  font-size: 0.85rem;
+  color: var(--warm-gray);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 2.5rem;
+}
+
+.google-sign-in-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  border: 1.5px solid var(--soft-line);
+  border-radius: 12px;
+  background: var(--white-foam);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--espresso);
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 1px 3px var(--shadow-warm);
+}
+
+.google-sign-in-btn:hover {
+  border-color: var(--crema);
+  box-shadow: 0 3px 12px var(--shadow-warm);
+  transform: translateY(-1px);
+}
+
+.google-sign-in-btn:active { transform: translateY(0); }
+
+.google-sign-in-btn svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.auth-footer {
+  margin-top: 2rem;
+  font-size: 0.72rem;
+  color: var(--warm-gray);
+  opacity: 0.7;
+}
+
+/* ─── USER BAR ─── */
+.user-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  padding: 0.5rem 1.25rem;
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 10;
+}
+
+.user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid var(--soft-line);
+  object-fit: cover;
+}
+
+.user-name {
+  font-size: 0.75rem;
+  color: var(--warm-gray);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sign-out-btn {
+  background: none;
+  border: 1px solid var(--soft-line);
+  border-radius: 6px;
+  padding: 0.25rem 0.55rem;
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  color: var(--warm-gray);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sign-out-btn:hover {
+  border-color: var(--crema);
+  color: var(--medium-roast);
+}
+
+/* Sync indicator */
+.sync-indicator {
+  font-size: 0.65rem;
+  color: var(--warm-gray);
+  opacity: 0;
+  transition: opacity 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.sync-indicator.active {
+  opacity: 1;
+}
+
+.sync-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--amber-glow);
+  animation: syncPulse 1s ease-in-out infinite;
+}
+
+@keyframes syncPulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+/* ─── HEADER ─── */
+.header {
+  position: relative;
+  text-align: center;
+  padding: 3rem 1.5rem 2rem;
+  background: linear-gradient(180deg, var(--parchment) 0%, var(--linen) 100%);
+  border-bottom: 1px solid var(--soft-line);
+}
+
+.header::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  background: var(--crema);
+  border-radius: 2px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.coffee-icon {
+  width: 36px;
+  height: 36px;
+  opacity: 0.85;
+}
+
+.header h1 {
+  font-family: var(--font-display);
+  font-size: 2.4rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--espresso);
+}
+
+.header p {
+  font-size: 0.85rem;
+  color: var(--warm-gray);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 0.25rem;
+}
+
+/* ─── MAIN CONTAINER ─── */
+.container {
+  position: relative;
+  z-index: 1;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 6rem;
+}
+
+/* ─── STATS BAR ─── */
+.stats-bar {
+  display: flex;
+  gap: 1px;
+  background: var(--soft-line);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 2rem;
+  box-shadow: 0 1px 3px var(--shadow-warm);
+}
+
+.stat {
+  flex: 1;
+  background: var(--white-foam);
+  padding: 1rem 0.75rem;
+  text-align: center;
+}
+
+.stat-value {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--dark-roast);
+  line-height: 1.2;
+}
+
+.stat-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--warm-gray);
+  margin-top: 0.15rem;
+}
+
+/* ─── ENTRY CARDS ─── */
+.entries-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+.entries-title {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--dark-roast);
+}
+
+.sort-btn {
+  background: none;
+  border: 1px solid var(--soft-line);
+  border-radius: 8px;
+  padding: 0.4rem 0.75rem;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--warm-gray);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sort-btn:hover {
+  border-color: var(--crema);
+  color: var(--medium-roast);
+}
+
+.entries-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.entry-card {
+  background: var(--white-foam);
+  border: 1px solid var(--soft-line);
+  border-radius: 14px;
+  padding: 1.5rem;
+  position: relative;
+  transition: transform 0.2s, box-shadow 0.2s;
+  animation: cardIn 0.35s ease-out both;
+}
+
+.entry-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px var(--shadow-warm);
+}
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.entry-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.entry-bean {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--dark-roast);
+  line-height: 1.3;
+  flex: 1;
+  margin-right: 0.75rem;
+}
+
+.entry-date {
+  font-size: 0.72rem;
+  color: var(--warm-gray);
+  white-space: nowrap;
+  padding-top: 0.2rem;
+  margin-right: 2rem;
+}
+
+.entry-meta {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.meta-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--light-roast);
+  background: var(--parchment);
+  padding: 0.3rem 0.65rem;
+  border-radius: 6px;
+}
+
+.meta-tag svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.entry-rating {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 0.75rem;
+}
+
+.star {
+  width: 16px;
+  height: 16px;
+  color: var(--soft-line);
+}
+
+.star.filled {
+  color: var(--amber-glow);
+}
+
+.entry-notes {
+  font-size: 0.88rem;
+  color: var(--espresso);
+  line-height: 1.65;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--soft-line);
+  font-style: italic;
+  position: relative;
+}
+
+.entry-notes::before {
+  content: '\201C';
+  font-family: var(--font-display);
+  font-size: 2rem;
+  color: var(--crema);
+  position: absolute;
+  top: 0.35rem;
+  left: -0.15rem;
+  line-height: 1;
+}
+
+.entry-notes p {
+  padding-left: 1rem;
+}
+
+.entry-actions {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.entry-card:hover .entry-actions {
+  opacity: 1;
+}
+
+.delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.35rem;
+  border-radius: 6px;
+  color: var(--warm-gray);
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+}
+
+.delete-btn:hover {
+  color: var(--danger);
+  background: rgba(160, 70, 60, 0.08);
+}
+
+/* ─── EMPTY STATE ─── */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+}
+
+.empty-state svg {
+  width: 64px;
+  height: 64px;
+  color: var(--crema);
+  margin-bottom: 1.25rem;
+  opacity: 0.7;
+}
+
+.empty-state h3 {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--dark-roast);
+  margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+  font-size: 0.88rem;
+  color: var(--warm-gray);
+}
+
+/* ─── FAB (Add Button) ─── */
+.fab {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: var(--dark-roast);
+  color: var(--parchment);
+  cursor: pointer;
+  box-shadow: 0 4px 20px var(--shadow-deep), 0 2px 6px var(--shadow-warm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 50;
+}
+
+.fab:hover {
+  background: var(--espresso);
+  transform: scale(1.08);
+  box-shadow: 0 6px 28px var(--shadow-deep);
+}
+
+.fab:active { transform: scale(0.96); }
+
+.fab svg { width: 24px; height: 24px; }
+
+/* ─── MODAL ─── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(44, 24, 16, 0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s, visibility 0.25s;
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal {
+  background: var(--white-foam);
+  border-radius: 20px 20px 0 0;
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 0;
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modal-overlay.active .modal {
+  transform: translateY(0);
+}
+
+.modal-handle {
+  width: 36px;
+  height: 4px;
+  background: var(--soft-line);
+  border-radius: 2px;
+  margin: 0.75rem auto 0;
+}
+
+.modal-header {
+  padding: 1.25rem 1.75rem 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h2 {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--dark-roast);
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.4rem;
+  color: var(--warm-gray);
+  border-radius: 8px;
+  transition: all 0.15s;
+  display: flex;
+}
+
+.close-btn:hover {
+  background: var(--parchment);
+  color: var(--espresso);
+}
+
+.modal-body {
+  padding: 1.25rem 1.75rem 2rem;
+}
+
+/* ─── FORM ─── */
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--light-roast);
+  margin-bottom: 0.4rem;
+}
+
+.form-input,
+.form-textarea {
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  border: 1.5px solid var(--soft-line);
+  border-radius: 10px;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--espresso);
+  background: var(--linen);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+
+.form-input:focus,
+.form-textarea:focus {
+  border-color: var(--crema);
+  box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.15);
+  background: var(--white-foam);
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+  color: var(--warm-gray);
+  opacity: 0.6;
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 90px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+/* Star rating input */
+.star-rating-input {
+  display: flex;
+  gap: 4px;
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  padding: 0.3rem 0;
+}
+
+.star-rating-input input {
+  display: none;
+}
+
+.star-rating-input label {
+  cursor: pointer;
+  color: var(--soft-line);
+  transition: color 0.15s, transform 0.15s;
+}
+
+.star-rating-input label:hover,
+.star-rating-input label:hover ~ label,
+.star-rating-input input:checked ~ label {
+  color: var(--amber-glow);
+}
+
+.star-rating-input label:hover {
+  transform: scale(1.15);
+}
+
+.star-rating-input label svg {
+  width: 28px;
+  height: 28px;
+  display: block;
+}
+
+/* Image upload */
+.image-upload-zone {
+  border: 2px dashed var(--soft-line);
+  border-radius: 12px;
+  padding: 1.25rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--linen);
+  position: relative;
+  overflow: hidden;
+}
+
+.image-upload-zone:hover {
+  border-color: var(--crema);
+  background: var(--parchment);
+}
+
+.image-upload-zone.has-image {
+  padding: 0;
+  border-style: solid;
+  border-color: var(--soft-line);
+}
+
+.image-upload-zone input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--warm-gray);
+}
+
+.upload-placeholder svg {
+  width: 28px;
+  height: 28px;
+  opacity: 0.5;
+}
+
+.upload-placeholder span {
+  font-size: 0.78rem;
+}
+
+.upload-placeholder .upload-hint {
+  font-size: 0.68rem;
+  opacity: 0.6;
+}
+
+.image-preview-wrap {
+  position: relative;
+  display: none;
+}
+
+.image-upload-zone.has-image .upload-placeholder { display: none; }
+.image-upload-zone.has-image .image-preview-wrap { display: block; }
+
+.image-preview {
+  width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: 10px;
+  display: block;
+}
+
+.image-remove-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(44, 24, 16, 0.65);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  transition: background 0.15s;
+  backdrop-filter: blur(4px);
+}
+
+.image-remove-btn:hover {
+  background: var(--danger);
+}
+
+.image-remove-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Entry card image */
+.entry-image {
+  width: 120px;
+  height: 120px;
+  border-radius: 10px;
+  margin-bottom: 0.85rem;
+  object-fit: cover;
+  display: block;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  flex-shrink: 0;
+}
+
+.entry-image:hover {
+  opacity: 0.92;
+}
+
+/* Image lightbox */
+.lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(44, 24, 16, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s, visibility 0.25s;
+  cursor: zoom-out;
+}
+
+.lightbox-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.lightbox-overlay img {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+  transform: scale(0.92);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.lightbox-overlay.active img {
+  transform: scale(1);
+}
+
+/* Submit */
+.submit-btn {
+  width: 100%;
+  padding: 0.85rem;
+  border: none;
+  border-radius: 12px;
+  background: var(--dark-roast);
+  color: var(--parchment);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 0.5rem;
+}
+
+.submit-btn:hover {
+  background: var(--espresso);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--shadow-deep);
+}
+
+.submit-btn:active { transform: translateY(0); }
+
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ─── DELETE CONFIRM ─── */
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(44, 24, 16, 0.5);
+  backdrop-filter: blur(2px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s;
+}
+
+.confirm-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.confirm-dialog {
+  background: var(--white-foam);
+  border-radius: 16px;
+  padding: 2rem;
+  max-width: 340px;
+  width: 90%;
+  text-align: center;
+  transform: scale(0.9);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.confirm-overlay.active .confirm-dialog {
+  transform: scale(1);
+}
+
+.confirm-dialog h3 {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--dark-roast);
+}
+
+.confirm-dialog p {
+  font-size: 0.85rem;
+  color: var(--warm-gray);
+  margin-bottom: 1.5rem;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.confirm-actions button {
+  flex: 1;
+  padding: 0.65rem;
+  border-radius: 10px;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-cancel {
+  background: var(--parchment);
+  border: 1px solid var(--soft-line);
+  color: var(--espresso);
+}
+
+.btn-cancel:hover { background: var(--soft-line); }
+
+.btn-delete {
+  background: var(--danger);
+  border: 1px solid var(--danger);
+  color: white;
+}
+
+.btn-delete:hover { background: var(--danger-hover); }
+
+/* ─── RESPONSIVE ─── */
+@media (min-width: 640px) {
+  .modal {
+    border-radius: 20px;
+    margin-bottom: 2rem;
+    max-height: 85vh;
+  }
+
+  .modal-overlay {
+    align-items: center;
+  }
+
+  .modal {
+    transform: translateY(20px);
+    opacity: 0;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s;
+  }
+
+  .modal-overlay.active .modal {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  .modal-handle { display: none; }
+
+  .fab {
+    bottom: 2.5rem;
+    right: calc(50% - 360px + 2rem);
+  }
+}
+
+@media (max-width: 480px) {
+  .header h1 { font-size: 2rem; }
+  .form-row { grid-template-columns: 1fr; }
+  .stat-value { font-size: 1.3rem; }
+  .entry-card { padding: 1.25rem; }
+  .entry-bean { font-size: 1.15rem; }
+  .entry-actions { opacity: 1; }
+  .user-name { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- Auth Screen -->
+<div class="auth-screen" id="authScreen">
+  <div class="auth-card">
+    <div class="logo">
+      <svg class="coffee-icon" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M6 16c0 7.18 5.82 13 13 13s13-5.82 13-13H6z" fill="#3D2318" opacity="0.9"/>
+        <path d="M29 16h2a4 4 0 010 8h-2" stroke="#3D2318" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+        <ellipse cx="19" cy="16" rx="13" ry="2.5" fill="#6B3A2A" opacity="0.3"/>
+        <path d="M14 8c0-2 1-3.5 0-5" stroke="#D4A574" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+        <path d="M19 7c0-2 1-3.5 0-5" stroke="#D4A574" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+        <path d="M24 8c0-2 1-3.5 0-5" stroke="#D4A574" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+      </svg>
+      <h1>CoffeeLedger</h1>
+    </div>
+    <p class="tagline">Grind &middot; Brew &middot; Taste &middot; Remember</p>
+    <button class="google-sign-in-btn" id="googleSignInBtn">
+      <svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+      Sign in with Google
+    </button>
+    <p class="auth-footer">Your coffee journal, synced across all devices</p>
+  </div>
+</div>
+
+<!-- Header -->
+<header class="header">
+  <div class="user-bar" id="userBar" style="display:none">
+    <div class="sync-indicator" id="syncIndicator">
+      <span class="sync-dot"></span>
+      <span>syncing</span>
+    </div>
+    <span class="user-name" id="userName"></span>
+    <img class="user-avatar" id="userAvatar" alt="" style="display:none">
+    <button class="sign-out-btn" id="signOutBtn">Sign out</button>
+  </div>
+  <div class="logo">
+    <svg class="coffee-icon" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M6 16c0 7.18 5.82 13 13 13s13-5.82 13-13H6z" fill="#3D2318" opacity="0.9"/>
+      <path d="M29 16h2a4 4 0 010 8h-2" stroke="#3D2318" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+      <ellipse cx="19" cy="16" rx="13" ry="2.5" fill="#6B3A2A" opacity="0.3"/>
+      <path d="M14 8c0-2 1-3.5 0-5" stroke="#D4A574" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+      <path d="M19 7c0-2 1-3.5 0-5" stroke="#D4A574" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+      <path d="M24 8c0-2 1-3.5 0-5" stroke="#D4A574" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+    </svg>
+    <h1>CoffeeLedger</h1>
+  </div>
+  <p>Grind &middot; Brew &middot; Taste &middot; Remember</p>
+</header>
+
+<!-- Main Content -->
+<main class="container">
+  <div class="stats-bar" id="statsBar">
+    <div class="stat">
+      <div class="stat-value" id="totalEntries">0</div>
+      <div class="stat-label">Entries</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="uniqueBeans">0</div>
+      <div class="stat-label">Beans</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="avgRating">&mdash;</div>
+      <div class="stat-label">Avg Rating</div>
+    </div>
+  </div>
+
+  <div class="entries-header">
+    <span class="entries-title">Journal</span>
+    <button class="sort-btn" id="sortBtn" title="Toggle sort order">Newest first</button>
+  </div>
+
+  <div class="entries-list" id="entriesList"></div>
+</main>
+
+<!-- FAB -->
+<button class="fab" id="addBtn" title="Add new entry" aria-label="Add new entry">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+  </svg>
+</button>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h2 id="modalTitle">New Entry</h2>
+      <button class="close-btn" id="closeModal" aria-label="Close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form id="entryForm">
+        <div class="form-group">
+          <label class="form-label" for="beanName">Bean Name</label>
+          <input class="form-input" type="text" id="beanName" placeholder="e.g. Ethiopia Yirgacheffe" required autocomplete="off">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="grindSetting">K6 Clicks</label>
+            <input class="form-input" type="number" id="grindSetting" placeholder="e.g. 50" min="0" max="200" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="brewMethod">Brew Method</label>
+            <input class="form-input" type="text" id="brewMethod" placeholder="e.g. V60, Espresso" autocomplete="off">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Rating</label>
+          <div class="star-rating-input">
+            <input type="radio" name="rating" value="5" id="star5"><label for="star5"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg></label>
+            <input type="radio" name="rating" value="4" id="star4"><label for="star4"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg></label>
+            <input type="radio" name="rating" value="3" id="star3"><label for="star3"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg></label>
+            <input type="radio" name="rating" value="2" id="star2"><label for="star2"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg></label>
+            <input type="radio" name="rating" value="1" id="star1"><label for="star1"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg></label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Photo</label>
+          <div class="image-upload-zone" id="imageUploadZone">
+            <input type="file" id="imageInput" accept="image/*">
+            <div class="upload-placeholder">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+              <span>Add a photo</span>
+              <span class="upload-hint">Click or drag an image here</span>
+            </div>
+            <div class="image-preview-wrap">
+              <img class="image-preview" id="imagePreview" alt="Preview">
+              <button type="button" class="image-remove-btn" id="imageRemoveBtn" aria-label="Remove image">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="notes">Tasting Notes</label>
+          <textarea class="form-textarea" id="notes" placeholder="How did it taste? Fruity, nutty, chocolatey..."></textarea>
+        </div>
+
+        <button class="submit-btn" type="submit" id="submitBtn">Save Entry</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirm -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-dialog">
+    <h3>Delete Entry?</h3>
+    <p>This can't be undone.</p>
+    <div class="confirm-actions">
+      <button class="btn-cancel" id="cancelDelete">Keep</button>
+      <button class="btn-delete" id="confirmDelete">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Image Lightbox -->
+<div class="lightbox-overlay" id="lightboxOverlay">
+  <img id="lightboxImg" alt="Full size photo">
+</div>
+
+<!-- Firebase SDK (modular CDN) -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.3.0/firebase-app.js';
+  import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/11.3.0/firebase-auth.js';
+  import { initializeFirestore, persistentLocalCache, persistentSingleTabManager, collection, doc, setDoc, deleteDoc, onSnapshot, query, orderBy } from 'https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js';
+
+  // ─── Firebase Config ───
+  // Create a firebase-config.js file in the same directory with your Firebase config.
+  // See README.md for setup instructions.
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    projectId: "YOUR_PROJECT",
+    storageBucket: "YOUR_PROJECT.firebasestorage.app",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = initializeFirestore(app, {
+    localCache: persistentLocalCache({ tabManager: persistentSingleTabManager() })
+  });
+  const provider = new GoogleAuthProvider();
+
+  // ─── State ───
+  let entries = [];
+  let sortNewest = true;
+  let deleteTargetId = null;
+  let editingId = null;
+  let pendingImageData = null;
+  let currentUser = null;
+  let unsubscribeEntries = null;
+
+  // ─── DOM ───
+  const authScreen = document.getElementById('authScreen');
+  const googleSignInBtn = document.getElementById('googleSignInBtn');
+  const userBar = document.getElementById('userBar');
+  const userName = document.getElementById('userName');
+  const userAvatar = document.getElementById('userAvatar');
+  const signOutBtn = document.getElementById('signOutBtn');
+  const syncIndicator = document.getElementById('syncIndicator');
+  const entriesList = document.getElementById('entriesList');
+  const modalOverlay = document.getElementById('modalOverlay');
+  const confirmOverlay = document.getElementById('confirmOverlay');
+  const entryForm = document.getElementById('entryForm');
+  const modalTitle = document.getElementById('modalTitle');
+  const sortBtn = document.getElementById('sortBtn');
+  const submitBtn = document.getElementById('submitBtn');
+  const imageInput = document.getElementById('imageInput');
+  const imageUploadZone = document.getElementById('imageUploadZone');
+  const imagePreview = document.getElementById('imagePreview');
+  const imageRemoveBtn = document.getElementById('imageRemoveBtn');
+  const lightboxOverlay = document.getElementById('lightboxOverlay');
+  const lightboxImg = document.getElementById('lightboxImg');
+
+  // ─── Helpers ───
+  function formatDate(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  function starsHTML(rating) {
+    if (!rating) return '';
+    let html = '<div class="entry-rating">';
+    for (let i = 1; i <= 5; i++) {
+      html += `<svg class="star ${i <= rating ? 'filled' : ''}" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>`;
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function escapeHTML(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function compressImage(file) {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX = 800;
+          let w = img.width, h = img.height;
+          if (w > MAX) { h = (h * MAX) / w; w = MAX; }
+          if (h > MAX) { w = (w * MAX) / h; h = MAX; }
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', 0.7));
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function setImagePreview(dataUrl) {
+    pendingImageData = dataUrl;
+    imagePreview.src = dataUrl;
+    imageUploadZone.classList.add('has-image');
+  }
+
+  function clearImagePreview() {
+    pendingImageData = null;
+    imagePreview.src = '';
+    imageUploadZone.classList.remove('has-image');
+    imageInput.value = '';
+  }
+
+  function showSync() {
+    syncIndicator.classList.add('active');
+  }
+
+  function hideSync() {
+    setTimeout(() => syncIndicator.classList.remove('active'), 600);
+  }
+
+  // ─── Firestore helpers ───
+  function entriesCollection() {
+    return collection(db, 'users', currentUser.uid, 'entries');
+  }
+
+  function saveEntryToFirestore(entry) {
+    showSync();
+    const { id, ...data } = entry;
+    setDoc(doc(db, 'users', currentUser.uid, 'entries', id), data)
+      .then(() => hideSync())
+      .catch((err) => {
+        console.error('Save failed:', err);
+        alert('Failed to save entry. Please try again.');
+        hideSync();
+      });
+  }
+
+  function deleteEntryFromFirestore(entryId) {
+    showSync();
+    deleteDoc(doc(db, 'users', currentUser.uid, 'entries', entryId))
+      .then(() => hideSync())
+      .catch((err) => {
+        console.error('Delete failed:', err);
+        alert('Failed to delete entry. Please try again.');
+        hideSync();
+      });
+  }
+
+  function subscribeToEntries() {
+    if (unsubscribeEntries) unsubscribeEntries();
+
+    const q = query(entriesCollection(), orderBy('date', 'desc'));
+    unsubscribeEntries = onSnapshot(q, (snapshot) => {
+      entries = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      render();
+    }, (err) => {
+      console.error('Snapshot error:', err);
+    });
+  }
+
+  // ─── Render ───
+  function updateStats() {
+    document.getElementById('totalEntries').textContent = entries.length;
+    const uniqueBeans = new Set(entries.map(e => e.beanName.toLowerCase().trim()));
+    document.getElementById('uniqueBeans').textContent = uniqueBeans.size;
+    const rated = entries.filter(e => e.rating);
+    const avg = rated.length ? (rated.reduce((s, e) => s + e.rating, 0) / rated.length) : 0;
+    document.getElementById('avgRating').innerHTML = avg ? avg.toFixed(1) : '&mdash;';
+  }
+
+  function render() {
+    updateStats();
+    const sorted = [...entries].sort((a, b) => {
+      const diff = new Date(b.date) - new Date(a.date);
+      return sortNewest ? diff : -diff;
+    });
+
+    if (sorted.length === 0) {
+      entriesList.innerHTML = `
+        <div class="empty-state">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+            <path d="M12 30c0 14 10 24 24 24s24-10 24-24H12z"/>
+            <path d="M56 30h4a7 7 0 010 14h-4"/>
+            <ellipse cx="36" cy="30" rx="24" ry="4" opacity="0.3"/>
+            <path d="M28 16c0-4 2-7 0-10" opacity="0.4"/>
+            <path d="M36 14c0-4 2-7 0-10" opacity="0.4"/>
+            <path d="M44 16c0-4 2-7 0-10" opacity="0.4"/>
+          </svg>
+          <h3>No brews yet</h3>
+          <p>Tap the + button to log your first cup</p>
+        </div>
+      `;
+      return;
+    }
+
+    entriesList.innerHTML = sorted.map((entry, i) => `
+      <div class="entry-card" style="animation-delay: ${i * 0.05}s">
+        <div class="entry-top">
+          <span class="entry-bean">${escapeHTML(entry.beanName)}</span>
+          <span class="entry-date">${formatDate(entry.date)}</span>
+        </div>
+        ${entry.image ? `<img class="entry-image" src="${entry.image}" alt="${escapeHTML(entry.beanName)}" loading="lazy" data-lightbox>` : ''}
+        <div class="entry-meta">
+          <span class="meta-tag">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4m0 14v4M4.22 4.22l2.83 2.83m9.9 9.9l2.83 2.83M1 12h4m14 0h4M4.22 19.78l2.83-2.83m9.9-9.9l2.83-2.83"/></svg>
+            ${entry.grindSetting} clicks
+          </span>
+          ${entry.brewMethod ? `<span class="meta-tag">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 8h1a4 4 0 010 8h-1"/><path d="M3 8h14v9a4 4 0 01-4 4H7a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+            ${escapeHTML(entry.brewMethod)}
+          </span>` : ''}
+        </div>
+        ${starsHTML(entry.rating)}
+        ${entry.notes ? `<div class="entry-notes"><p>${escapeHTML(entry.notes)}</p></div>` : ''}
+        <div class="entry-actions">
+          <button class="delete-btn" data-id="${entry.id}" title="Delete entry" aria-label="Delete entry">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+          </button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // ─── Modal ───
+  function openModal(edit = null) {
+    editingId = edit ? edit.id : null;
+    modalTitle.textContent = edit ? 'Edit Entry' : 'New Entry';
+    document.getElementById('beanName').value = edit ? edit.beanName : '';
+    document.getElementById('grindSetting').value = edit ? edit.grindSetting : '';
+    document.getElementById('brewMethod').value = edit ? (edit.brewMethod || '') : '';
+    document.getElementById('notes').value = edit ? (edit.notes || '') : '';
+
+    document.querySelectorAll('.star-rating-input input').forEach(r => r.checked = false);
+    if (edit && edit.rating) {
+      const radio = document.getElementById('star' + edit.rating);
+      if (radio) radio.checked = true;
+    }
+
+    if (edit && edit.image) {
+      setImagePreview(edit.image);
+    } else {
+      clearImagePreview();
+    }
+
+    modalOverlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => document.getElementById('beanName').focus(), 300);
+  }
+
+  function closeModal() {
+    modalOverlay.classList.remove('active');
+    document.body.style.overflow = '';
+    entryForm.reset();
+    clearImagePreview();
+    editingId = null;
+  }
+
+  // ─── Auth ───
+  googleSignInBtn.addEventListener('click', async () => {
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (err) {
+      if (err.code !== 'auth/popup-closed-by-user') {
+        console.error('Sign-in error:', err);
+        alert('Sign-in failed: ' + err.code + ' — ' + err.message);
+      }
+    }
+  });
+
+  signOutBtn.addEventListener('click', async () => {
+    if (unsubscribeEntries) unsubscribeEntries();
+    entries = [];
+    render();
+    await signOut(auth);
+  });
+
+  onAuthStateChanged(auth, (user) => {
+    currentUser = user;
+    if (user) {
+      authScreen.classList.add('hidden');
+      userBar.style.display = 'flex';
+      userName.textContent = user.displayName || user.email;
+      if (user.photoURL) {
+        userAvatar.src = user.photoURL;
+        userAvatar.style.display = 'block';
+      }
+      // Migrate any localStorage entries to Firestore
+      migrateLocalStorage();
+      subscribeToEntries();
+    } else {
+      authScreen.classList.remove('hidden');
+      userBar.style.display = 'none';
+      userAvatar.style.display = 'none';
+      entries = [];
+      render();
+    }
+  });
+
+  // ─── Migrate localStorage to Firestore (one-time) ───
+  async function migrateLocalStorage() {
+    const STORAGE_KEY = 'coffeeledger_entries';
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    try {
+      const localEntries = JSON.parse(raw);
+      if (!Array.isArray(localEntries) || localEntries.length === 0) return;
+      showSync();
+      for (const entry of localEntries) {
+        const { id, ...data } = entry;
+        await setDoc(doc(db, 'users', currentUser.uid, 'entries', id), data);
+      }
+      localStorage.removeItem(STORAGE_KEY);
+      hideSync();
+      console.log(`Migrated ${localEntries.length} entries from localStorage to Firestore`);
+    } catch (e) {
+      console.error('Migration error:', e);
+    }
+  }
+
+  // ─── Events ───
+  document.getElementById('addBtn').addEventListener('click', () => openModal());
+  document.getElementById('closeModal').addEventListener('click', closeModal);
+  modalOverlay.addEventListener('click', (e) => {
+    // Don't close on outside click to prevent losing progress
+  });
+
+  entryForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Saving...';
+
+    const ratingInput = document.querySelector('.star-rating-input input:checked');
+    const id = editingId || Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+    const entry = {
+      id,
+      beanName: document.getElementById('beanName').value.trim(),
+      grindSetting: parseInt(document.getElementById('grindSetting').value, 10),
+      brewMethod: document.getElementById('brewMethod').value.trim(),
+      rating: ratingInput ? parseInt(ratingInput.value, 10) : 0,
+      notes: document.getElementById('notes').value.trim(),
+      image: pendingImageData || null,
+      date: editingId
+        ? (entries.find(en => en.id === editingId)?.date || new Date().toISOString())
+        : new Date().toISOString()
+    };
+
+    saveEntryToFirestore(entry);
+    closeModal();
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Save Entry';
+  });
+
+  // Sort toggle
+  sortBtn.addEventListener('click', () => {
+    sortNewest = !sortNewest;
+    sortBtn.textContent = sortNewest ? 'Newest first' : 'Oldest first';
+    render();
+  });
+
+  // Delete
+  entriesList.addEventListener('click', (e) => {
+    const btn = e.target.closest('.delete-btn');
+    if (!btn) return;
+    deleteTargetId = btn.dataset.id;
+    confirmOverlay.classList.add('active');
+  });
+
+  // Edit on double-click
+  entriesList.addEventListener('dblclick', (e) => {
+    const card = e.target.closest('.entry-card');
+    if (!card) return;
+    const beanEl = card.querySelector('.entry-bean');
+    if (!beanEl) return;
+    const beanName = beanEl.textContent;
+    const entry = entries.find(en => en.beanName === beanName);
+    if (entry) openModal(entry);
+  });
+
+  document.getElementById('cancelDelete').addEventListener('click', () => {
+    confirmOverlay.classList.remove('active');
+    deleteTargetId = null;
+  });
+
+  document.getElementById('confirmDelete').addEventListener('click', async () => {
+    if (deleteTargetId) {
+      await deleteEntryFromFirestore(deleteTargetId);
+    }
+    confirmOverlay.classList.remove('active');
+    deleteTargetId = null;
+  });
+
+  confirmOverlay.addEventListener('click', (e) => {
+    if (e.target === confirmOverlay) {
+      confirmOverlay.classList.remove('active');
+      deleteTargetId = null;
+    }
+  });
+
+  // ─── Image handling ───
+  imageInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const dataUrl = await compressImage(file);
+    setImagePreview(dataUrl);
+  });
+
+  imageRemoveBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    clearImagePreview();
+  });
+
+  imageUploadZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    imageUploadZone.style.borderColor = 'var(--crema)';
+    imageUploadZone.style.background = 'var(--parchment)';
+  });
+
+  imageUploadZone.addEventListener('dragleave', () => {
+    imageUploadZone.style.borderColor = '';
+    imageUploadZone.style.background = '';
+  });
+
+  imageUploadZone.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    imageUploadZone.style.borderColor = '';
+    imageUploadZone.style.background = '';
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      const dataUrl = await compressImage(file);
+      setImagePreview(dataUrl);
+    }
+  });
+
+  // ─── Lightbox ───
+  entriesList.addEventListener('click', (e) => {
+    const img = e.target.closest('[data-lightbox]');
+    if (img) {
+      lightboxImg.src = img.src;
+      lightboxOverlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+  });
+
+  lightboxOverlay.addEventListener('click', () => {
+    lightboxOverlay.classList.remove('active');
+    document.body.style.overflow = '';
+  });
+
+  // Keyboard
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (lightboxOverlay.classList.contains('active')) {
+        lightboxOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+      } else if (confirmOverlay.classList.contains('active')) {
+        confirmOverlay.classList.remove('active');
+        deleteTargetId = null;
+      }
+    }
+  });
+</script>
+</body>
+</html>

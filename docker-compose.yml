@@ -1,0 +1,7 @@
+services:
+  coffeeledger:
+    build: .
+    container_name: coffeeledger
+    ports:
+      - "8090:80"
+    restart: unless-stopped
